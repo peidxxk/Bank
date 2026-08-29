@@ -41,6 +41,16 @@ func (e *Expenses) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if dto.SpentOn == "" {
+		http.Error(w, "spent_on_doesnt_exist", http.StatusBadRequest)
+		return
+	}
+
+	if dto.Category == "" {
+		http.Error(w, "category_doesnt_exist", http.StatusBadRequest)
+		return
+	}
+
 	result, err := e.Db.ExecContext(
 		r.Context(),
 		`
@@ -178,13 +188,15 @@ func (e *Expenses) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	id := chi.URLParam(r, "id")
+
 	result, err := e.Db.ExecContext(
 		r.Context(),
 		`UPDATE expenses SET amount = $1, category = $2, note = $3 WHERE id = $4`,
 		dto.Amount,
 		dto.Category,
 		dto.Note,
-		dto.Id,
+		id,
 	)
 	if err != nil {
 		log.Printf("update expense: %v", err)

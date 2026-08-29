@@ -9,7 +9,7 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
-func loadRoutes(db *sqlx.DB) *chi.Mux {
+func LoadRoutes(db *sqlx.DB) *chi.Mux {
 	router := chi.NewRouter()
 	expensesRouter := &handler.Expenses{
 		Db: db,

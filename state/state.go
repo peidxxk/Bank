@@ -16,7 +16,7 @@ type AppState struct {
 func New(db *sqlx.DB) *AppState {
 	return &AppState{
 		db:     db,
-		router: loadRoutes(db),
+		router: LoadRoutes(db),
 	}
 }
 
