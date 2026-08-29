@@ -11,6 +11,17 @@ definitions:
       spent_on:
         type: string
     type: object
+  expense.PatchDto:
+    properties:
+      amount:
+        type: number
+      category:
+        type: string
+      id:
+        type: string
+      note:
+        type: string
+    type: object
   expense.ResponseDto:
     properties:
       amount:
@@ -77,6 +88,71 @@ paths:
           schema:
             type: string
       summary: Create expense
+      tags:
+      - expenses
+  /expenses/{id}:
+    get:
+      description: Returns expense by ID
+      parameters:
+      - description: Expense ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/expense.ResponseDto'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get expense by ID
+      tags:
+      - expenses
+    patch:
+      consumes:
+      - application/json
+      description: Updates an expense by ID. Only amount, category, and note can be
+        changed.
+      parameters:
+      - description: Fields to update
+        in: body
+        name: expense
+        required: true
+        schema:
+          $ref: '#/definitions/expense.PatchDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/expense.ResponseDto'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Updates expense (amount, category, or note)
       tags:
       - expenses
 swagger: "2.0"

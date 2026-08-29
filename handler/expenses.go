@@ -2,11 +2,14 @@ package handler
 
 import (
 	"Bank/dto/expense"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -109,14 +112,93 @@ func (e *Expenses) List(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetById TODO: Single entry
+// GetById
+// @Summary Get expense by ID
+// @Description Returns expense by ID
+// @Tags expenses
+// @Produce json
+// @Param id path string true "Expense ID"
+// @Success 200 {object} expense.ResponseDto
+// @Failure 400 {string} string
+// @Failure 404 {string} string
+// @Failure 500 {string} string
+// @Router /expenses/{id} [get]
 func (e *Expenses) GetById(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("[Expenses] GetById")
+	id := chi.URLParam(r, "id")
+
+	var item expense.ResponseDto
+
+	err := e.Db.GetContext(r.Context(), &item, `
+        SELECT id, amount, category, note, spent_on, created_on
+        FROM expenses
+        WHERE id = $1
+    `, id)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			http.Error(w, "expense_not_found", http.StatusNotFound)
+			return
+		}
+
+		log.Printf("get expense: %v", err)
+		http.Error(w, "failed_to_get_expense", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(item); err != nil {
+		log.Printf("encode expense: %v", err)
+	}
 }
 
-// Update TODO: Update entry
+// Update
+// @Summary Updates expense (amount, category, or note)
+// @Description Updates an expense by ID. Only amount, category, and note can be changed.
+// @Tags expenses
+// @Param expense body expense.PatchDto true "Fields to update"
+// @Accept json
+// @Produce json
+// @Success 200 {object} expense.ResponseDto
+// @Failure 400 {string} string
+// @Failure 404 {string} string
+// @Failure 500 {string} string
+// @Router /expenses/{id} [patch]
 func (e *Expenses) Update(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("[Expenses] Update")
+	var dto expense.PatchDto
+
+	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	result, err := e.Db.ExecContext(
+		r.Context(),
+		`UPDATE expenses SET amount = $1, category = $2, note = $3 WHERE id = $4`,
+		dto.Amount,
+		dto.Category,
+		dto.Note,
+		dto.Id,
+	)
+	if err != nil {
+		log.Printf("update expense: %v", err)
+		http.Error(w, "failed_to_update_expense", http.StatusInternalServerError)
+		return
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("update expense rows affected: %v", err)
+		http.Error(w, "failed_to_update_expense", http.StatusInternalServerError)
+	}
+
+	if rows == 0 {
+		http.Error(w, "expense_not_found", http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 // Delete TODO: Delete (hard) entry
