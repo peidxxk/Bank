@@ -1,0 +1,2 @@
+ALTER TABLE expenses
+ALTER COLUMN id SET DEFAULT uuidv4();

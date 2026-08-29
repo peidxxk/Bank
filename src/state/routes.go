@@ -5,17 +5,16 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jmoiron/sqlx"
 )
 
-func loadRoutes() *chi.Mux {
+func loadRoutes(db *sqlx.DB) *chi.Mux {
 	router := chi.NewRouter()
-	router.Use(middleware.Logger)
-	router.Route("/expenses", loadExpensesRoutes)
-	return router
-}
+	expensesRouter := &handler.Expenses{
+		Db: db,
+	}
 
-func loadExpensesRoutes(router chi.Router) {
-	expensesRouter := &handler.Expenses{}
+	router.Use(middleware.Logger)
 
 	router.Post("/", expensesRouter.Create)
 	router.Get("/", expensesRouter.List)
@@ -23,4 +22,5 @@ func loadExpensesRoutes(router chi.Router) {
 	router.Patch("/{id}", expensesRouter.Update)
 	router.Delete("/{id}", expensesRouter.Delete)
 	router.Get("/summary", expensesRouter.GetSummary)
+	return router
 }

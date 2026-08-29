@@ -4,15 +4,19 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type AppState struct {
+	db     *sqlx.DB
 	router http.Handler
 }
 
-func New() *AppState {
+func New(db *sqlx.DB) *AppState {
 	return &AppState{
-		router: loadRoutes(),
+		db:     db,
+		router: loadRoutes(db),
 	}
 }
 

@@ -3,13 +3,20 @@ package handler
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/jmoiron/sqlx"
 )
 
-type Expenses struct{}
+type Expenses struct {
+	Db *sqlx.DB
+}
 
 // Create TODO: New entry
 func (e *Expenses) Create(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("[Expenses] Create")
+	e.Db.Query(
+		"INSERT INTO expenses VALUES ($1, $2, $3)",
+	)
 }
 
 // List TODO: Newest first
