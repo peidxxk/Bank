@@ -1,0 +1,82 @@
+basePath: /
+definitions:
+  expense.CreateDto:
+    properties:
+      amount:
+        type: number
+      category:
+        type: string
+      note:
+        type: string
+      spent_on:
+        type: string
+    type: object
+  expense.ResponseDto:
+    properties:
+      amount:
+        type: number
+      category:
+        type: string
+      created_on:
+        type: string
+      id:
+        type: string
+      note:
+        type: string
+      spent_on:
+        type: string
+    type: object
+host: localhost:3000
+info:
+  contact: {}
+  description: API for managing expenses.
+  title: BankApi
+  version: "1.0"
+paths:
+  /expenses:
+    get:
+      description: Returns all expenses
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/expense.ResponseDto'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: List expenses
+      tags:
+      - expenses
+    post:
+      consumes:
+      - application/json
+      description: Creates a new expense
+      parameters:
+      - description: Expense
+        in: body
+        name: expense
+        required: true
+        schema:
+          $ref: '#/definitions/expense.CreateDto'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create expense
+      tags:
+      - expenses
+swagger: "2.0"
