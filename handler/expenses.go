@@ -18,7 +18,7 @@ type Expenses struct {
 }
 
 // Create
-// @Summary Create expense
+// @Summary Create an expense
 // @Description Creates a new expense
 // @Tags expenses
 // @Accept json
@@ -82,7 +82,12 @@ func (e *Expenses) List(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed_to_list_expense", http.StatusInternalServerError)
 		return
 	}
-	defer rows.Close()
+	defer func(rows *sqlx.Rows) {
+		err := rows.Close()
+		if err != nil {
+			fmt.Printf("failed to close rows: %v", err)
+		}
+	}(rows)
 
 	var expenses []expense.ResponseDto
 
@@ -113,7 +118,7 @@ func (e *Expenses) List(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetById
-// @Summary Get expense by ID
+// @Summary Get an expense by ID
 // @Description Returns expense by ID
 // @Tags expenses
 // @Produce json
@@ -201,12 +206,74 @@ func (e *Expenses) Update(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// Delete TODO: Delete (hard) entry
+// Delete
+// @Summary Deletes expense
+// @Description Deletes an expense by ID
+// @Tags expenses
+// @Produce json
+// @Param id path string true "Expense ID"
+// @Success 200 {object} expense.ResponseDto
+// @Failure 400 {string} string
+// @Failure 404 {string} string
+// @Failure 500 {string} string
+// @Router /expenses/{id} [delete]
 func (e *Expenses) Delete(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("[Expenses] Delete")
+	id := chi.URLParam(r, "id")
+
+	result, err := e.Db.ExecContext(r.Context(), "DELETE FROM expenses WHERE id = $1", id)
+	if err != nil {
+		log.Printf("delete expense: %v", err)
+		http.Error(w, "failed_to_delete_expense", http.StatusInternalServerError)
+		return
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("delete expense rows affected: %v", err)
+		http.Error(w, "failed_to_delete_expense", http.StatusInternalServerError)
+	}
+
+	if rows == 0 {
+		http.Error(w, "expense_not_found", http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
-// GetSummary TODO: Return by category
+// GetSummary
+// @Summary Gets expenses summary
+// @Description Gets a total amount for a category
+// @Tags expenses
+// @Produce json
+// @Param category query string true "Expense category"
+// @Success 200 {number} float64
+// @Failure 400 {string} string
+// @Failure 404 {string} string
+// @Failure 500 {string} string
+// @Router /expenses/summary [get]
 func (e *Expenses) GetSummary(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("[Expenses] GetSummary, remoteAddr: %s\n", r.RemoteAddr)
+	var dto expense.SummaryDto
+	dto.Category = r.URL.Query().Get("category")
+
+	var total float64
+
+	err := e.Db.GetContext(
+		r.Context(),
+		&total,
+		`SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE category = $1`,
+		dto.Category,
+	)
+	if err != nil {
+		log.Printf("get summary: %s\n", err)
+		http.Error(w, "failed_to_get_summary", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(total); err != nil {
+		log.Printf("encode summary: %v", err)
+	}
 }

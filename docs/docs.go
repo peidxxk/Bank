@@ -54,7 +54,7 @@ const docTemplate = `{
                 "tags": [
                     "expenses"
                 ],
-                "summary": "Create expense",
+                "summary": "Create an expense",
                 "parameters": [
                     {
                         "description": "Expense",
@@ -85,6 +85,53 @@ const docTemplate = `{
                 }
             }
         },
+        "/expenses/summary": {
+            "get": {
+                "description": "Gets a total amount for a category",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "expenses"
+                ],
+                "summary": "Gets expenses summary",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Expense category",
+                        "name": "category",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/expenses/{id}": {
             "get": {
                 "description": "Returns expense by ID",
@@ -94,7 +141,52 @@ const docTemplate = `{
                 "tags": [
                     "expenses"
                 ],
-                "summary": "Get expense by ID",
+                "summary": "Get an expense by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Expense ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/expense.ResponseDto"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes an expense by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "expenses"
+                ],
+                "summary": "Deletes expense",
                 "parameters": [
                     {
                         "type": "string",

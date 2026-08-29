@@ -87,10 +87,40 @@ paths:
           description: Internal Server Error
           schema:
             type: string
-      summary: Create expense
+      summary: Create an expense
       tags:
       - expenses
   /expenses/{id}:
+    delete:
+      description: Deletes an expense by ID
+      parameters:
+      - description: Expense ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/expense.ResponseDto'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Deletes expense
+      tags:
+      - expenses
     get:
       description: Returns expense by ID
       parameters:
@@ -118,7 +148,7 @@ paths:
           description: Internal Server Error
           schema:
             type: string
-      summary: Get expense by ID
+      summary: Get an expense by ID
       tags:
       - expenses
     patch:
@@ -153,6 +183,37 @@ paths:
           schema:
             type: string
       summary: Updates expense (amount, category, or note)
+      tags:
+      - expenses
+  /expenses/summary:
+    get:
+      description: Gets a total amount for a category
+      parameters:
+      - description: Expense category
+        in: query
+        name: category
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: number
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Gets expenses summary
       tags:
       - expenses
 swagger: "2.0"
