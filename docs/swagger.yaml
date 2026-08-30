@@ -41,7 +41,7 @@ host: localhost:3000
 info:
   contact: {}
   description: API for managing expenses.
-  title: BankApi
+  title: BankApi (TakeHome)
   version: "1.0"
 paths:
   /expenses:

@@ -2,6 +2,10 @@ package state
 
 import (
 	"Bank/handler"
+	"Bank/table"
+	"context"
+	"fmt"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -15,12 +19,21 @@ func LoadRoutes(db *sqlx.DB) *chi.Mux {
 		Db: db,
 	}
 
+	ctx := context.Background()
+
+	_, err := table.CreateExpenses(db, ctx)
+	if err != nil {
+		_ = fmt.Errorf("error while creating table 'expenses': %v", err)
+	}
+
 	router.Use(middleware.Logger)
 
-	// only for testing purposes
-	router.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:3000/swagger/doc.json"),
-	))
+	prod := os.Getenv("PRODUCTION")
+	if prod == "n" || prod == "N" {
+		router.Get("/swagger/*", httpSwagger.Handler(
+			httpSwagger.URL("http://localhost:3000/swagger/doc.json"),
+		))
+	}
 
 	router.Post("/expenses", expensesRouter.Create)
 	router.Get("/expenses", expensesRouter.List)

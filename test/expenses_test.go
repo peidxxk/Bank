@@ -1,8 +1,8 @@
 package test
 
 import (
-	"Bank/handler"
 	"Bank/state"
+	"Bank/table"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -14,6 +14,7 @@ import (
 	"uuid"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
@@ -29,18 +30,33 @@ func cleanExpenses(t *testing.T, db *sqlx.DB) {
 func setupTestDB(t *testing.T) *sqlx.DB {
 	t.Helper()
 	ctx := context.Background()
-	db, err := sqlx.ConnectContext(ctx, "postgres", os.Getenv("DATABASE_URL"))
+
+	db, err := sqlx.ConnectContext(ctx, "postgres", os.Getenv("DATABASE_TEST_URL"))
 
 	if err != nil {
 		t.Fatalf("connect to database: %v", err)
 	}
 	t.Cleanup(func() {
-		db.Close()
+		err := db.Close()
+		if err != nil {
+			return
+		}
 	})
+
+	_, err = table.CreateExpenses(db, ctx)
+	if err != nil {
+		_ = fmt.Errorf("error while creating table 'expenses': %v", err)
+	}
+
 	return db
 }
 
 func setupRouter(t *testing.T) (*sqlx.DB, http.Handler) {
+	err := godotenv.Load("../.env")
+	if err != nil {
+		t.Fatalf("load .env: %v", err)
+	}
+
 	t.Helper()
 	db := setupTestDB(t)
 	router := state.LoadRoutes(db)
@@ -64,27 +80,7 @@ func createTestExpense(t *testing.T, db *sqlx.DB) uuid.UUID {
 }
 
 func TestCreateExpense(t *testing.T) {
-	ctx := context.Background()
-
-	db, err := sqlx.ConnectContext(
-		ctx,
-		"postgres",
-		os.Getenv("DATABASE_URL"),
-	)
-	if err != nil {
-		t.Fatalf("connect to database: %v", err)
-	}
-	defer db.Close()
-
-	if err := db.PingContext(ctx); err != nil {
-		t.Fatalf("ping database: %v", err)
-	}
-
-	expensesHandler := &handler.Expenses{
-		Db: db,
-	}
-
-	router := state.LoadRoutes(db)
+	db, router := setupRouter(t)
 
 	req := httptest.NewRequest(
 		http.MethodPost,
@@ -112,7 +108,7 @@ func TestCreateExpense(t *testing.T) {
 
 	var count int
 
-	err = db.GetContext(ctx, &count, `
+	err := db.Get(&count, `
 		SELECT COUNT(*)
 		FROM expenses
 		WHERE amount = 100
@@ -124,11 +120,9 @@ func TestCreateExpense(t *testing.T) {
 		t.Fatalf("check created expense: %v", err)
 	}
 
-	//if count != 1 {
-	//	t.Fatalf("expected 1 created expense, got %d", count)
-	//}
-
-	_ = expensesHandler
+	if count != 1 {
+		t.Fatalf("expected 1 created expense, got %d", count)
+	}
 
 	cleanExpenses(t, db)
 }

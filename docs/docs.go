@@ -342,7 +342,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:3000",
 	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "BankApi",
+	Title:            "BankApi (TakeHome)",
 	Description:      "API for managing expenses.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
