@@ -7,6 +7,17 @@ Stack used: Chi, sqlx, swaggo, PostgreSQL
 ## Q: Why to pick this kind of stack ?
 A: It's equivalent to Rust (Axum + sqlx) stack, providing an access to raw SQL Queries. 
 
+## Endpoints 
+```shell
+POST   /expenses              — create a new expense
+GET    /expenses              — list all expenses (newest first)
+GET    /expenses/{id}         — get a single expense
+PATCH  /expenses/{id}         — update an expense (amount, category, or note)
+DELETE /expenses/{id}         — delete an expense
+GET    /expenses/summary      — return total amount spent, grouped by 
+```
+
+
 ## Quick Start
 First of all - having Go 1.27 is required on your machine.
 
